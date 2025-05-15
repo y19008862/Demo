@@ -1,108 +1,203 @@
-### 🛠️ 1. **Create and Switch to a New Branch**
-git checkout -b your-branch-name
-### ✍️ 2. **Do Your Work (Add, Commit)**
-git add .
-git commit -m "Your meaningful commit message"
-### 🔀 3. **Switch Back to Main**
-git checkout main
-### 🔄 4. **Merge Your Branch into Main**
-git merge your-branch-name
-### ⬆️ 5. **Push to Remote (Optional)**
-git push origin main
+@model Repository.ViewModel.BookPaginationViewModel
+
+<table class="table table-bordered">
+    <thead>
+        <th>Id</th>
+        <th data-sort-column="Title" data-sort-order="asc" class="sortable" id="titlecolum" ">
+            Title
+        <img src="../img/arrow-down-up.svg">
+        </th>
+        <th>Author</th>
+        <th data-sort-column="PublishYear" data-sort-order="asc" class="sortable" id="publishyearcolum" ">
+            Publish Year
+            <img src="../img/arrow-down-up.svg">
+            </th>
+        <th>ISBN</th>
+        <th>Status</th>
+        <th>Issued By</th>
+        <th>Edit</th>
+        <th>Delete</th>
+        <th>Cover Image</th>
+    </thead>
+    <tbody id="allBooks">
+        @foreach (var book in Model.Books)
+        {
+            <tr>
+                <td>@book.Id</td>
+                <td>@book.Title</td>
+                <td>@book.Author</td>
+                <td>@book.PublishYear</td>
+                <td>@book.ISBN</td>
+                <td>@book.Status</td>
+                <td>@book.UserId</td>
+                <td>
+                    <button onclick="editBook(@book.Id)"
+                        class="btn btn-primary">
+                        Edit
+                    </button>
+                </td>
+                <td>
+                    <button onclick="deleteBook(@book.Id)"
+                        class="btn btn-danger">
+                        Delete
+                    </button>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-info text-white" onclick="UpdateCoverImg(@book.Id)">Image</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<div id="paginationContainer" class="d-flex justify-content-end align-items-center pagination mb-0">
+    <div class="page-item d-flex align-items-center" style="margin-left: 10px; margin-right: 2px;">
+        <span class="item-per-page" style="margin-right: 5px;">Items Per Page:</span>
+        <select id="itemsPerPage" class="form-select form-select-sm" style="width: auto; cursor: pointer;">
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+        </select>
+    </div>
+
+    <div class="page-item d-flex align-items-center" style="pointer-events: none; border: none; color: black;">
+        <span class="page-link showing-page-item" id="paginationInfo"
+            style="pointer-events: none; border: none; color: black;">@Model.TotalItems</span>
+        <div class="d-none" id="totalItems">
+            @Model.TotalItems
+        </div>
+    </div>
+
+    <div id="prevPage" class="page-item disabled" style="margin-right: 10px;">
+        <button class="page-link">
+            <img src="https://www.svgrepo.com/show/351711/angle-left.svg" width="18" height="18">
+        </button>
+    </div>
+
+    <div id="nextPage" class="page-item">
+        <button class="page-link">
+            <img src="https://www.svgrepo.com/show/351714/angle-right.svg" width="18" height="18">
+        </button>
+    </div>
+</div>
+
+<div id="BookImgModal">
+
+</div>
+
+<script>
+
+ $(document).on("click", ".sortable", function () {
+
+    const column = $(this).data("sort-column");
+    const currentOrder = $(this).data("sort-order");
+  
+    sortOrder = currentOrder === "asc" ? "desc" : "asc";
+    sortColumn = column;
+  
+    $(this).data("sort-order", sortOrder);
+    console.log("order",sortOrder);
+    console.log("column",sortColumn);
+
+    loadBooks(currentPage, itemsPerPage, searchQuery = '', sortColumn, sortOrder);
+    
+  }); 
+  
+</script>
 
 
-namespace Repository.Models;
 
-public class User
-{
-    public int Id { get; set; }
-    public string Email { get; set; } = null!;
-    public string Password { get; set; } = null!;
-    public string Name { get; set; } = null!;
-    public string Role { get; set; } = null!;
-    public ICollection<Product> Products { get; set; } = new List<Product>();
+----------------------
+
+
+@model Repository.ViewModel.BookViewModel
+
+<div class="modal fade" id="addImgModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel"> Add Book Cover Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="addImg" onsubmit="return false;">
+                <input type="hidden" id="BookId" asp-for="Id" />
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="mb-3 px-3 col">
+                            <div class="form-floating">
+                            <input type="file" accept="image/*" class="form-control " id="image" asp-for="Img"
+                                         required>
+                                <label for="Img">Image</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary mx-2 " id="AddImgBtn">Save</button>
+                    <button type="button" class="btn btn-light border border-primary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+$(document).on('click', '#AddImgBtn', function (e) {
+    UpdateImg(e);
+});
+
+function UpdateImg(e) {
+
+    e.preventDefault();
+
+    const formData = {
+        image: $('#image').val(),
+        id: $("#BookId").val()
+      };
+  
+    console.log("formData",formData);
+
+    $.ajax({
+        url: '/Book/UpdateImg',
+        type: 'POST',
+        data: 
+        {
+            image: $('#image').val(),
+            id: $("#BookId").val()
+          },
+        success: function (data) {
+            if (data.success) {
+                alert(data.message);
+            } else {
+                alert(data.message);
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+        }
+    });
 }
 
 
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Repository.Models
-{
-    public class Product
+    public async Task<IActionResult> UpdateImg([FromForm]IFormFile image, int id)
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Auto-increment (serial)
-        public int Id { get; set; }
 
-        [Required]
-        [StringLength(100)] // Max length 100
-        public string Name { get; set; } = null!;
+        if (image != null)
+        {
+            string directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/Book");
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
 
-        [Column(TypeName = "decimal(10,2)")]
-        public decimal Price { get; set; }
+            string fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+            string filePath = Path.Combine(directoryPath, fileName);
 
-        [Required]
-        public int UserId { get; set; } // Foreign key
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await image.CopyToAsync(stream);
+            }
 
-        [ForeignKey("UserId")]
-        public User User { get; set; } = null!;
+            var ImgPath = "/images/menu/" + fileName;
+            _bookService.UpdateImg(ImgPath, id) ;
+        }
+        return Json(new { success = true});
     }
-}
-
-dotnet ef migrations add AddProductTable --startup-project ../Web
-dotnet ef database update --startup-project ../Web
-
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace MyApp.Data.Models
-{
-    public enum ProductCategory
-    {
-        Electronics,
-        Clothing,
-        Food,
-        Furniture
-    }
-
-    public class Product
-    {
-        // Primary key (serial)
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
-
-        // Required string with max length
-        [Required]
-        [StringLength(100)]
-        public string Name { get; set; } = null!;
-
-        // Nullable string
-        [StringLength(200)]
-        public string? Description { get; set; }
-
-        // Decimal with precision
-        [Column(TypeName = "decimal(10,2)")]
-        public decimal Price { get; set; }
-
-        // Boolean value
-        public bool IsAvailable { get; set; }
-
-        // Date field
-        public DateTime CreatedDate { get; set; }
-
-        // Enum (stored as int by default)
-        public ProductCategory Category { get; set; }
-
-        // Foreign key reference to User
-        [Required]
-        public int UserId { get; set; }
-
-        [ForeignKey("UserId")]
-        public User User { get; set; } = null!;
-    }
-}
-
-
-
