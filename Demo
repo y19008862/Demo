@@ -1,203 +1,116 @@
-@model Repository.ViewModel.BookPaginationViewModel
+Here are the **updated codes** with fixes for:
 
-<table class="table table-bordered">
-    <thead>
-        <th>Id</th>
-        <th data-sort-column="Title" data-sort-order="asc" class="sortable" id="titlecolum" ">
-            Title
-        <img src="../img/arrow-down-up.svg">
-        </th>
-        <th>Author</th>
-        <th data-sort-column="PublishYear" data-sort-order="asc" class="sortable" id="publishyearcolum" ">
-            Publish Year
-            <img src="../img/arrow-down-up.svg">
-            </th>
-        <th>ISBN</th>
-        <th>Status</th>
-        <th>Issued By</th>
-        <th>Edit</th>
-        <th>Delete</th>
-        <th>Cover Image</th>
-    </thead>
-    <tbody id="allBooks">
-        @foreach (var book in Model.Books)
-        {
-            <tr>
-                <td>@book.Id</td>
-                <td>@book.Title</td>
-                <td>@book.Author</td>
-                <td>@book.PublishYear</td>
-                <td>@book.ISBN</td>
-                <td>@book.Status</td>
-                <td>@book.UserId</td>
-                <td>
-                    <button onclick="editBook(@book.Id)"
-                        class="btn btn-primary">
-                        Edit
-                    </button>
-                </td>
-                <td>
-                    <button onclick="deleteBook(@book.Id)"
-                        class="btn btn-danger">
-                        Delete
-                    </button>
-                </td>
-                <td>
-                    <button type="button" class="btn btn-info text-white" onclick="UpdateCoverImg(@book.Id)">Image</button>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-<div id="paginationContainer" class="d-flex justify-content-end align-items-center pagination mb-0">
-    <div class="page-item d-flex align-items-center" style="margin-left: 10px; margin-right: 2px;">
-        <span class="item-per-page" style="margin-right: 5px;">Items Per Page:</span>
-        <select id="itemsPerPage" class="form-select form-select-sm" style="width: auto; cursor: pointer;">
-            <option value="5" selected>5</option>
-            <option value="10">10</option>
-            <option value="15">15</option>
-        </select>
-    </div>
+1. **Sorting issue in the table**
+2. **Image upload issue (correct use of `FormData` for `IFormFile`)**
 
-    <div class="page-item d-flex align-items-center" style="pointer-events: none; border: none; color: black;">
-        <span class="page-link showing-page-item" id="paginationInfo"
-            style="pointer-events: none; border: none; color: black;">@Model.TotalItems</span>
-        <div class="d-none" id="totalItems">
-            @Model.TotalItems
-        </div>
-    </div>
+---
 
-    <div id="prevPage" class="page-item disabled" style="margin-right: 10px;">
-        <button class="page-link">
-            <img src="https://www.svgrepo.com/show/351711/angle-left.svg" width="18" height="18">
-        </button>
-    </div>
+### ✅ **Fix: Sorting Not Working**
 
-    <div id="nextPage" class="page-item">
-        <button class="page-link">
-            <img src="https://www.svgrepo.com/show/351714/angle-right.svg" width="18" height="18">
-        </button>
-    </div>
-</div>
+In your table header HTML, you had duplicate double quotes (`""`) at the end of some `th` tags. Fix those:
 
-<div id="BookImgModal">
+**Update this:**
 
-</div>
+```html
+<th data-sort-column="Title" data-sort-order="asc" class="sortable" id="titlecolum" ">
+```
 
-<script>
+**To this:**
 
- $(document).on("click", ".sortable", function () {
+```html
+<th data-sort-column="Title" data-sort-order="asc" class="sortable" id="titlecolum">
+```
 
-    const column = $(this).data("sort-column");
-    const currentOrder = $(this).data("sort-order");
-  
-    sortOrder = currentOrder === "asc" ? "desc" : "asc";
-    sortColumn = column;
-  
-    $(this).data("sort-order", sortOrder);
-    console.log("order",sortOrder);
-    console.log("column",sortColumn);
+**Do the same for:**
 
-    loadBooks(currentPage, itemsPerPage, searchQuery = '', sortColumn, sortOrder);
-    
-  }); 
-  
-</script>
+```html
+<th data-sort-column="PublishYear" data-sort-order="asc" class="sortable" id="publishyearcolum" ">
+```
 
+**Fix to:**
 
+```html
+<th data-sort-column="PublishYear" data-sort-order="asc" class="sortable" id="publishyearcolum">
+```
 
-----------------------
+---
 
+### ✅ **Fix: Image Upload Not Working**
 
-@model Repository.ViewModel.BookViewModel
+You're using `FormData`, but in your code you were **not using FormData correctly**. Here is the **fixed JavaScript** and **controller**:
 
-<div class="modal fade" id="addImgModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel"> Add Book Cover Image</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" id="addImg" onsubmit="return false;">
-                <input type="hidden" id="BookId" asp-for="Id" />
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="mb-3 px-3 col">
-                            <div class="form-floating">
-                            <input type="file" accept="image/*" class="form-control " id="image" asp-for="Img"
-                                         required>
-                                <label for="Img">Image</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary mx-2 " id="AddImgBtn">Save</button>
-                    <button type="button" class="btn btn-light border border-primary" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+---
 
-$(document).on('click', '#AddImgBtn', function (e) {
-    UpdateImg(e);
-});
+### ✅ **Updated JavaScript: `UpdateImg()`**
 
+```javascript
 function UpdateImg(e) {
+    e.preventDefault();
 
-    e.preventDefault();
+    var formData = new FormData();
+    formData.append("image", $('#image')[0].files[0]);
+    formData.append("id", $("#BookId").val());
 
-    const formData = {
-        image: $('#image').val(),
-        id: $("#BookId").val()
-      };
-  
-    console.log("formData",formData);
-
-    $.ajax({
-        url: '/Book/UpdateImg',
-        type: 'POST',
-        data: 
-        {
-            image: $('#image').val(),
-            id: $("#BookId").val()
-          },
-        success: function (data) {
-            if (data.success) {
-                alert(data.message);
-            } else {
-                alert(data.message);
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error(xhr.responseText);
-        }
-    });
+    $.ajax({
+        url: '/Book/UpdateImg',
+        type: 'POST',
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function (data) {
+            if (data.success) {
+                alert(data.message || "Image uploaded successfully.");
+                $('#addImgModal').modal('hide');
+            } else {
+                alert(data.message || "Image upload failed.");
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+        }
+    });
 }
+```
 
+---
 
-    public async Task<IActionResult> UpdateImg([FromForm]IFormFile image, int id)
-    {
+### ✅ **Updated Controller Method: `UpdateImg()`**
 
-        if (image != null)
-        {
-            string directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/Book");
-            if (!Directory.Exists(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-            }
+**Fix the wrong image path `/images/menu/` to `/images/Book/`**
 
-            string fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
-            string filePath = Path.Combine(directoryPath, fileName);
+```csharp
+public async Task<IActionResult> UpdateImg([FromForm] IFormFile image, int id)
+{
+    if (image != null)
+    {
+        string directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/Book");
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
 
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await image.CopyToAsync(stream);
-            }
+        string fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+        string filePath = Path.Combine(directoryPath, fileName);
 
-            var ImgPath = "/images/menu/" + fileName;
-            _bookService.UpdateImg(ImgPath, id) ;
-        }
-        return Json(new { success = true});
-    }
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await image.CopyToAsync(stream);
+        }
+
+        var imgPath = "/images/Book/" + fileName;
+        _bookService.UpdateImg(imgPath, id);
+    }
+
+    return Json(new { success = true, message = "Image uploaded successfully." });
+}
+```
+
+---
+
+These changes will:
+
+* ✅ Fix header sorting click bugs
+* ✅ Upload the image properly using `FormData`
+* ✅ Show success messages and close the modal
+
+Let me know if you also want to display the uploaded image in the book table.
